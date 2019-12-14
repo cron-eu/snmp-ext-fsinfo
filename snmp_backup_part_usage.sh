@@ -47,7 +47,7 @@ function resolve_device() {
 
 function nagios_string() {
   device=$1
-  tune2fs -l "$device" | awk -F: '/^Free blocks/ { free=$2 } /^Block count/ { total=$2 } /^Last write time/ { gsub(/^[^:]*: +/,""); timestamp=$0 } END { print total/1024 ";" (total-free)/1024 ";" 1-free/total ";" timestamp }'
+  tune2fs -l "$device" | awk -F: '/^Free blocks/ { free=$2 } /^Block count/ { total=$2 } /^Last write time/ { gsub(/^[^:]*: +/,""); timestamp=$0 } END { print total ";" (total-free) ";" 1-free/total ";" timestamp }'
 }
 
 function process_snmp_get() {
