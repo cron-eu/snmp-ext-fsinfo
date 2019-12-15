@@ -60,10 +60,10 @@ snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::experimental.1
 This should return the free blocks, last write timestamp and other infos like:
 
 ```bash
-SNMPv2-SMI::experimental.1.0.0 = STRING: "xvdb"
-SNMPv2-SMI::experimental.1.0.1 = STRING: "8466cac3-10c2-4f0f-802f-c8891b5c919f"
-SNMPv2-SMI::experimental.1.0.2 = INTEGER: 51465923
-SNMPv2-SMI::experimental.1.0.3 = INTEGER: 1576375538
+SNMPv2-SMI::experimental.1.3.0 = STRING: "xvdf"
+SNMPv2-SMI::experimental.1.3.1 = STRING: "7d0260f4-6670-407c-aaa2-fe13d26017ae"
+SNMPv2-SMI::experimental.1.3.2 = INTEGER: 50526563
+SNMPv2-SMI::experimental.1.3.3 = INTEGER: 3182
 (..)
 ```
 
