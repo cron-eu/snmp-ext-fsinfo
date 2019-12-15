@@ -33,10 +33,11 @@ use constant {
 
 sub snmp_output {
     (my $oid_ref, my $type, my $value) = @_;
-
-    print OID_ROOT . '.' . join('.', @$oid_ref) . "\n";
-    print $type . "\n";
-    print $value . "\n";
+    print join("\n",
+        join('.', (OID_ROOT, @$oid_ref)),
+        $type,
+        $value
+    );
 }
 
 sub get_device_path_from_oid_index {
@@ -150,15 +151,12 @@ getopts('h?gn', \%opts) or usage;
 my $base_dir = "/dev/disk/by-uuid";
 chdir($base_dir);
 
-if ( (index $ARGV[0], OID_ROOT) >= 0) {
+if ( (index $ARGV[0], OID_ROOT) == 0) {
     $_ = substr($ARGV[0], length(OID_ROOT));
     my @oid = split(/\./);
     shift(@oid);
 
-    if ($opts{'g'}) {
-        snmp_get(@oid);
-    } elsif ($opts{'n'}) {
-        snmp_next(@oid);
-    }
+    snmp_get(@oid) if $opts{'g'};
+    snmp_next(@oid) if $opts{'n'};
 
 } else { die("OID must match the prefix " . OID_ROOT); }
