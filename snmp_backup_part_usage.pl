@@ -10,16 +10,25 @@ use Date::Parse;
 # SNMPv2-SMI::experimental.1.<DEVICE_NO>.<OID_ACTION>
 
 use constant {
-    OID_ROOT                   => ".1.3.6.1.3.1", # SNMPv2-SMI::experimental.1
+    # our OID root, e.g. SNMPv2-SMI::experimental.1
+    OID_ROOT                           => ".1.3.6.1.3.1",
 
-    OID_ACTION_DEVICE          => 0,
-    OID_ACTION_UUID            => 1,
-    OID_ACTION_FREE_BLOCKS     => 2,
-    OID_ACTION_LAST_WRITE_TIME => 3,
+    # device name, e.g. vxdc
+    OID_ACTION_DEVICE                  => 0,
 
-    DEV_INFO_UUID              => "DEV_INFO_UUID",
-    DEV_INFO_FREE_BLOCKS       => "DEV_INFO_FREE_BLOCKS",
-    DEV_INFO_LAST_WRITE_TIME   => "DEV_INFO_LAST_WRITE_TIME",
+    # device uuid, e.g. 22ff11f5-2160-4f76-8547-2c4f13b1f2a8
+    OID_ACTION_UUID                    => 1,
+
+    # free blocks (usually of 4k bytes)
+    OID_ACTION_FREE_BLOCKS             => 2,
+
+    # last write timeinterval (until now), e.g. 7200 => 2 hours
+    OID_ACTION_LAST_WRITE_TIMEINTERVAL => 3,
+
+    # internals
+    DEV_INFO_UUID                      => "DEV_INFO_UUID",
+    DEV_INFO_FREE_BLOCKS               => "DEV_INFO_FREE_BLOCKS",
+    DEV_INFO_LAST_WRITE_TIME           => "DEV_INFO_LAST_WRITE_TIME",
 };
 
 sub snmp_output {
@@ -95,10 +104,10 @@ sub snmp_process_endpoint {
         if (defined()) {
             snmp_output($oid_ref, "INTEGER32", $_);
         }
-    } elsif ($action == OID_ACTION_LAST_WRITE_TIME) {
+    } elsif ($action == OID_ACTION_LAST_WRITE_TIMEINTERVAL) {
         $_ = get_info_from_device($device_path, DEV_INFO_LAST_WRITE_TIME);
         if (defined()) {
-            snmp_output($oid_ref, "INTEGER32", str2time($_));
+            snmp_output($oid_ref, "INTEGER32", time() - str2time($_));
         }
     }
 }
@@ -134,7 +143,7 @@ sub snmp_next {
         return;
     }
 
-    if ($snmp_action < OID_ACTION_LAST_WRITE_TIME) {
+    if ($snmp_action < OID_ACTION_LAST_WRITE_TIMEINTERVAL) {
         snmp_get($oid_dev, $snmp_action + 1);
         return;
     } else {
