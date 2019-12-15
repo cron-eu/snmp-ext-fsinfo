@@ -67,6 +67,69 @@ SNMPv2-SMI::experimental.1.0.3 = INTEGER: 1576375538
 (..)
 ```
 
+## Nagios
+
+EDIT `objects/commands.cfg`:
+
+```
+define command {
+	command_name	check_backup_usage
+	# warn if less than 4GB free, critical if less than 2GB
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H backup-ffm-$ARG1$.ffm -o SNMPv2-SMI::experimental.1.$ARG2$.2 -u blocks -w 1048576: -c 524288:
+}
+
+define command {
+	command_name	check_backup_last_write
+	# warn if last write time was more than 2 days ago, critical if more than 6 days ago
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H backup-ffm-$ARG1$.ffm -o SNMPv2-SMI::experimental.1.$ARG2$.3 -u seconds -w 172800 -c 518400
+}
+```
+
+Then, for each host with an associated backup service, append to the host configuration:
+
+```
+define service {
+	use			generic-service
+	service_description	WEBXX_BACKUP_USAGE
+	check_command		check_backup_usage!1!9
+	host_name		cron-support
+}
+
+define service {
+	use			generic-service
+	service_description	WEBXX_BACKUP_LAST_WRITE
+	check_command		check_backup_last_write!1!9
+	host_name		cron-support
+}
+```
+
+To create the service definitions there is a perl script available:
+
+```bash
+/usr/share/snmp/nagios/create_nagios_services.pl
+```
+
+This will generate snippets like:
+
+```bash
+# uuid: cca3e787-6594-4e55-8c24-094c634d9f45
+# device: xvdi
+define service {
+	use			generic-service
+	service_description	BERIMBAU_BASCHNY_DE_BACKUP_USAGE
+	check_command		check_backup_usage!1!6
+	host_name		berimbau.baschny.de
+}
+define service {
+	use			generic-service
+	service_description	BERIMBAU_BASCHNY_DE_LAST_WRITE
+	check_command		check_backup_last_write!1!6
+	host_name		berimbau.baschny.de
+}
+```
+
+to be appended to the nagios host definition file.
+
 ## ToDo's
 
 * make the SNMP Perl script suid and revert the snmp daemon configuration so the daemon runs as user `snmp`.
