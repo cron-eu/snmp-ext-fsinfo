@@ -75,31 +75,13 @@ EDIT `objects/commands.cfg`:
 define command {
 	command_name	check_backup_usage
 	# warn if less than 4GB free, critical if less than 2GB
-	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H backup-ffm-$ARG1$.ffm -o SNMPv2-SMI::experimental.1.$ARG2$.2 -u blocks -w 1048576: -c 524288:
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::experimental.1.$ARG2$.2 -u blocks -w 1048576: -c 524288:
 }
 
 define command {
 	command_name	check_backup_last_write
 	# warn if last write time was more than 2 days ago, critical if more than 6 days ago
-	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H backup-ffm-$ARG1$.ffm -o SNMPv2-SMI::experimental.1.$ARG2$.3 -u seconds -w 172800 -c 518400
-}
-```
-
-Then, for each host with an associated backup service, append to the host configuration:
-
-```
-define service {
-	use			generic-service
-	service_description	WEBXX_BACKUP_USAGE
-	check_command		check_backup_usage!1!9
-	host_name		cron-support
-}
-
-define service {
-	use			generic-service
-	service_description	WEBXX_BACKUP_LAST_WRITE
-	check_command		check_backup_last_write!1!9
-	host_name		cron-support
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::experimental.1.$ARG2$.3 -u seconds -w 172800 -c 518400
 }
 ```
 
@@ -111,20 +93,22 @@ To create the service definitions there is a perl script available:
 
 This will generate snippets like:
 
-```bash
-# uuid: cca3e787-6594-4e55-8c24-094c634d9f45
-# device: xvdi
+```
+# backup-host: backup-ffm-1.ffm
+# uuid: 7d0260f4-6670-407c-aaa2-fe13d26017ae
+# device: xvdf
+# oid: SNMPv2-SMI::experimental.1.3
 define service {
 	use			generic-service
-	service_description	BERIMBAU_BASCHNY_DE_BACKUP_USAGE
-	check_command		check_backup_usage!1!6
-	host_name		berimbau.baschny.de
+	service_description	BACKUP_USAGE
+	check_command		check_backup_usage!backup-ffm-1.ffm!3
+	host_name		web50.serverdienst.net
 }
 define service {
 	use			generic-service
-	service_description	BERIMBAU_BASCHNY_DE_LAST_WRITE
-	check_command		check_backup_last_write!1!6
-	host_name		berimbau.baschny.de
+	service_description	BACKUP_LAST_WRITE
+	check_command		check_backup_last_write!backup-ffm-1.ffm!3
+	host_name		web50.serverdienst.net
 }
 ```
 
