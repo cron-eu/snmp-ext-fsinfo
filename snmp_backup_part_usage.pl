@@ -126,30 +126,17 @@ sub snmp_get {
 }
 
 ##
-# Determine the next leaf in the OIB tree and return it
+# Fetch the "next" leaf in the OIB tree and returns it. Used by snmpwalk to traverse the OIB tree.
 #
 # see https://stackoverflow.com/questions/16365940/snmp-extend-as-an-integer-and-not-a-string
 #
 sub snmp_next {
     (my $oid_dev, my $snmp_action) = @_;
 
-    unless (defined $oid_dev) {
-        snmp_get(0,0);
-        return;
-    }
-
-    unless (defined($snmp_action)) {
-        snmp_get($oid_dev + 1, 0);
-        return;
-    }
-
-    if ($snmp_action < OID_ACTION_LAST_WRITE_TIMEINTERVAL) {
-        snmp_get($oid_dev, $snmp_action + 1);
-        return;
-    } else {
-        snmp_get($oid_dev + 1, 0);
-        return;
-    }
+    return snmp_next(0) unless defined $oid_dev;
+    return snmp_get($oid_dev, 0) unless defined $snmp_action;
+    return snmp_get($oid_dev, $snmp_action + 1) if ($snmp_action < OID_ACTION_LAST_WRITE_TIMEINTERVAL);
+    snmp_next($oid_dev + 1);
 }
 
 ##
