@@ -37,6 +37,14 @@ And add this configuration:
 pass .1.3.6.1.3.1               /usr/bin/perl   /usr/share/snmp/snmp_backup_part_usage.pl
 ``` 
 
+And in the Access Control block:
+
+```bash
+rocommunity public  217.24.223.9
+```
+
+.. so the specified IP can access the rocommunity.
+
 Restart the daemon
 
 ```bash
