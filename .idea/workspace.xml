@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5d4340a4-903c-40a0-bcd3-2ab0c1308840" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/perl5local.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/perl5shared.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/snmp_backup_part_usage.pl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/snmp_backup_part_usage.sh" beforeDir="false" afterPath="$PROJECT_DIR$/snmp_backup_part_usage.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,13 +30,14 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="options.lastSelected" value="web.server" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.splitter.main.proportions" value="0.3" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="web.server" />
   </component>
   <component name="ServiceViewManager">
     <option name="viewStates">
@@ -60,6 +64,8 @@
       <workItem from="1576352087598" duration="4000" />
       <workItem from="1576352098643" duration="7847000" />
       <workItem from="1576360755836" duration="490000" />
+      <workItem from="1576364969008" duration="579000" />
+      <workItem from="1576402173076" duration="17030000" />
     </task>
     <servers />
   </component>
@@ -75,13 +81,18 @@
       <screen x="0" y="23" width="2560" height="1361" />
     </state>
     <state x="636" y="263" width="1200" height="800" key="DirDiffDialog/0.23.2560.1361@0.23.2560.1361" timestamp="1576352364722" />
-    <state x="745" y="302" key="SettingsEditor" timestamp="1576352542949">
-      <screen x="0" y="23" width="2560" height="1361" />
+    <state x="745" y="303" key="SettingsEditor" timestamp="1576402756095">
+      <screen x="0" y="23" width="2560" height="1365" />
     </state>
     <state x="745" y="302" key="SettingsEditor/0.23.2560.1361@0.23.2560.1361" timestamp="1576352542949" />
+    <state x="745" y="303" key="SettingsEditor/0.23.2560.1365@0.23.2560.1365" timestamp="1576402756095" />
     <state x="1021" y="340" key="run.anything.popup" timestamp="1576353973363">
       <screen x="0" y="23" width="2560" height="1361" />
     </state>
     <state x="1021" y="340" key="run.anything.popup/0.23.2560.1361@0.23.2560.1361" timestamp="1576353973363" />
+    <state x="921" y="444" width="670" height="676" key="search.everywhere.popup" timestamp="1576419853710">
+      <screen x="0" y="23" width="2560" height="1365" />
+    </state>
+    <state x="921" y="444" width="670" height="676" key="search.everywhere.popup/0.23.2560.1365@0.23.2560.1365" timestamp="1576419853710" />
   </component>
 </project>
