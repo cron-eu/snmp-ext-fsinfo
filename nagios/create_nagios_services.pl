@@ -55,9 +55,6 @@ foreach my $dir (@dirs) {
         if (defined($oid)) {
             my $device = basename readlink "/dev/disk/by-uuid/" . $uuid;
 
-            my $service_desc = uc $dir;
-            $service_desc =~ s/\./_/g;
-
             my $host = `hostname -f`;
             chomp $host;
 
@@ -67,13 +64,13 @@ foreach my $dir (@dirs) {
 # device: $device
 define service {
 	use			generic-service
-	service_description	${service_desc}_BACKUP_USAGE
+	service_description	BACKUP_USAGE
 	check_command		check_backup_usage!1!$oid
 	host_name		$dir
 }
 define service {
 	use			generic-service
-	service_description	${service_desc}_LAST_WRITE
+	service_description	BACKUP_LAST_WRITE
 	check_command		check_backup_last_write!1!$oid
 	host_name		$dir
 }
