@@ -54,9 +54,15 @@ foreach my $dir (@dirs) {
 
         if (defined($oid)) {
             my $device = basename readlink "/dev/disk/by-uuid/" . $uuid;
+
             my $service_desc = uc $dir;
             $service_desc =~ s/\./_/g;
+
+            my $host = `hostname -f`;
+            chomp $host;
+
             print <<"END";
+# backup-host: $host
 # uuid: $uuid
 # device: $device
 define service {
