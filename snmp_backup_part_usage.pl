@@ -29,6 +29,7 @@ use constant {
     DEV_INFO_UUID                      => "DEV_INFO_UUID",
     DEV_INFO_FREE_BLOCKS               => "DEV_INFO_FREE_BLOCKS",
     DEV_INFO_LAST_WRITE_TIME           => "DEV_INFO_LAST_WRITE_TIME",
+    TUNE2FS_BIN                        => "sudo /sbin/tune2fs",
 };
 
 sub snmp_output {
@@ -81,7 +82,8 @@ sub get_info_from_device {
 
     my $tune2fs_key = $tune2fs_keys{$key};
 
-    my $tune2fs = `/sbin/tune2fs -l "$device_path"`;
+    my $tune2fs_bin = TUNE2FS_BIN;
+    my $tune2fs = `$tune2fs_bin -l "$device_path"`;
 
     foreach (split /[\r\n]+/, $tune2fs) {
         if (index($_, $tune2fs_key) == 0) {

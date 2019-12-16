@@ -10,7 +10,7 @@ backup partitions and make this info available via SNMP by using a perl script.
 Install SNMP Daemon:
 
 ```bash
-aptitude install snmpd
+aptitude install snmpd sudo
 ```
 
 Make the perl script from the repo available under `/usr/share/snmp/snmp_backup_part_usage.pl`
@@ -20,13 +20,13 @@ cp snmp_backup_part_usage.pl /usr/share/snmp/
 chmod +x /usr/share/snmp/snmp_backup_part_usage.pl
 ```
 
-Configure SNMP Daemon:
-
-EDIT `vi /etc/default/snmpd` and setup the daemon to run as root:
+Configure sudo for the tune2fs binary
 
 ```bash
-SNMPDOPTS='-Lsd -Lf /dev/null -I -smux -p /var/run/snmpd.pid'
+echo "snmp    ALL = (root) NOPASSWD: /sbin/tune2fs -l *" > /etc/sudoers.d/snmp_backup_part_usage_script
 ```
+
+Configure SNMP Daemon:
 
 EDIT `/etc/snmp/snmpd.conf`
 
@@ -116,7 +116,6 @@ to be appended to the nagios host definition file.
 
 ## ToDo's
 
-* make the SNMP Perl script suid and revert the snmp daemon configuration so the daemon runs as user `snmp`.
 * write a NIB File to resolve the numeric OIDs.
 
 
