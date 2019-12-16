@@ -37,7 +37,7 @@ sub snmp_output {
         join('.', (OID_ROOT, @$oid_ref)),
         $type,
         $value
-    );
+    ) . "\n";
 }
 
 sub get_device_path_from_oid_index {
