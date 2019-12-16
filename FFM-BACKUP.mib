@@ -1,0 +1,104 @@
+cron-MIB DEFINITIONS ::= BEGIN
+
+	IMPORTS
+		enterprises, mgmt, NetworkAddress, IpAddress, Counter, Gauge,
+		TimeTicks
+		      FROM RFC1155-SMI
+
+		OBJECT-TYPE
+		      FROM RFC 1212;
+
+		-- From RFC-1213 (MIB-II)
+		DisplayString ::= OCTET STRING
+
+	cron      OBJECT IDENTIFIER ::= { enterprises 99999 }
+	ffmBackup OBJECT IDENTIFIER ::= { cron 1 }
+
+	partNumber OBJECT-TYPE
+	    SYNTAX  INTEGER
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	            "The number of available backup partitions on the system."
+	    ::= { ffmBackup 1 }
+
+	partTable OBJECT-TYPE
+	    SYNTAX  SEQUENCE OF partEntry
+	    ACCESS  not-accessible
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "A list of backup partition entries"
+
+	    ::= { ffmBackup 2 }
+
+    partEntry OBJECT-TYPE
+		SYNTAX  partEntry
+		ACCESS  not-accessible
+		STATUS  mandatory
+		DESCRIPTION
+		  "A partition entry contains all infos about the associated backup partition."
+		INDEX   { deviceIndex }
+
+		::= { partTable 1 }
+
+	partEntry ::=
+	    SEQUENCE {
+	        deviceIndex
+	            INTEGER,
+	        deviceName
+	            OCTET STRING,
+	        deviceUUID
+	            DisplayString,
+	        deviceFreeBlocks
+	            INTEGER,
+	        deviceLastWrite
+	            INTEGER
+	    }
+
+    deviceIndex OBJECT-TYPE
+	    SYNTAX  INTEGER
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "Integer reference number (row number) for the partEntry table.
+	         1 corresponds to /dev/xvdb, 2 to /dev/xvdc and so on"
+	       ::= { partEntry 1 }
+
+	deviceName OBJECT-TYPE
+		SYNTAX  OCTET STRING (SIZE (4..6))
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "The host device name, e.g. xvdb"
+
+	    ::= { partEntry 2 }
+
+	deviceUUID OBJECT-TYPE
+		SYNTAX  DisplayString (SIZE (36))
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "The unique uuid of this entry. Equals to the uuid of the VDI on the xen hypervisor.
+	         The same uuid is also being used as the uuid of the ext file system."
+
+	    ::= { partEntry 3 }
+
+	deviceFreeBlocks OBJECT-TYPE
+		SYNTAX  INTEGER
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "The number of free blocks of the file system, as reported by tune2fs -l. Usually 4k sized."
+
+	    ::= { partEntry 4 }
+
+	deviceLastWrite OBJECT-TYPE
+		SYNTAX  INTEGER
+	    ACCESS  read-only
+	    STATUS  mandatory
+	    DESCRIPTION
+	        "The number of seconds when the last write occurred, measured from the time of the request."
+
+	    ::= { partEntry 5 }
+
+END
