@@ -53,12 +53,13 @@ sub get_device_path_from_oid_index {
 # see http://xenbits.xenproject.org/docs/unstable/man/xen-vbd-interface.7.html
 sub get_xen_device_number {
 
+    my ($device) = @_;
+
     use constant {
         MINOR_MASK => 037774000377,
         MINOR_SHIFT => 0,
     };
 
-    my ($device) = @_;
     my $rdev= (stat($device))[6];
 
     my $minor = ($rdev & MINOR_MASK) >> MINOR_SHIFT;
