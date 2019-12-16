@@ -53,6 +53,7 @@ foreach my $dir (@dirs) {
         my ($oid) = grep { $uuid_to_oid_array[$_] eq $uuid } (0 .. @uuid_to_oid_array-1);
 
         if (defined($oid)) {
+            $oid++;
             my $device = basename readlink "/dev/disk/by-uuid/" . $uuid;
 
             my $host = `hostname -f`;

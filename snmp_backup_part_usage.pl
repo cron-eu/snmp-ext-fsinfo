@@ -41,7 +41,11 @@ sub snmp_output {
 }
 
 sub get_device_path_from_oid_index {
-    my $oid_dev = shift();
+    my $oid_dev = shift() - 1;
+
+    # our index is positive (non zero) by definition
+    return if $oid_dev == -1;
+
     my @devices = get_all_disks();
     $devices[$oid_dev];
 }
@@ -188,20 +192,20 @@ sub snmp_next {
     my ($oid_prefix, $index) = parse_oid($oid);
 
     if ($oid_prefix eq OID_PART_NUMBER) {
-        return snmp_next(OID_PART_TABLE_ENTRY_INDEX.'.0') if defined $index;
+        return snmp_next(OID_PART_TABLE_ENTRY_INDEX.'.1') if defined $index;
         return snmp_get(OID_PART_NUMBER.'.0');
     } elsif (oid_has_prefix($oid_prefix, OID_PART_TABLE_ENTRY)) {
         return snmp_get(OID_PART_TABLE_ENTRY_INDEX.'.0') if $oid_prefix eq OID_PART_TABLE_ENTRY;
-        return snmp_get($oid_prefix.'.0') unless defined $index;
+        return snmp_get($oid_prefix.'.1') unless defined $index;
 
-        my $last_index = get_disks_count() - 1;
+        my $last_index = get_disks_count();
         if ($index < $last_index) {
             return snmp_get($oid_prefix . '.' . ($index + 1));
         }
 
         my $table_entry = substr($oid_prefix, (length(OID_PART_TABLE_ENTRY)+1));
         if ($table_entry < 5) {
-            return snmp_get(OID_PART_TABLE_ENTRY . '.' . ($table_entry + 1) . '.0');
+            return snmp_get(OID_PART_TABLE_ENTRY . '.' . ($table_entry + 1) . '.1');
         }
         return
     }
