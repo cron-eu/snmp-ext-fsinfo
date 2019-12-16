@@ -34,7 +34,7 @@ And add this configuration:
 
 ```bash
 # internet.experimental.1
-pass .1.3.6.1.3.1               /usr/bin/perl   /usr/share/snmp/snmp_backup_part_usage.pl
+pass .1.3.6.1.4.1.99999.1               /usr/bin/perl   /usr/share/snmp/snmp_backup_part_usage.pl
 ``` 
 
 And in the Access Control block:
@@ -54,17 +54,30 @@ Restart the daemon
 ## Test
 
 ```bash
-snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::experimental.1
+snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::enterprises.99999.1
 ```
 
 This should return the free blocks, last write timestamp and other infos like:
 
 ```bash
-SNMPv2-SMI::experimental.1.3.0 = STRING: "xvdf"
-SNMPv2-SMI::experimental.1.3.1 = STRING: "7d0260f4-6670-407c-aaa2-fe13d26017ae"
-SNMPv2-SMI::experimental.1.3.2 = INTEGER: 50526563
-SNMPv2-SMI::experimental.1.3.3 = INTEGER: 3182
+SNMPv2-SMI::enterprises.99999.1.1.0 = INTEGER: 15
+SNMPv2-SMI::enterprises.99999.1.2.1.1.1 = INTEGER: 1
+SNMPv2-SMI::enterprises.99999.1.2.1.1.2 = INTEGER: 2
+SNMPv2-SMI::enterprises.99999.1.2.1.1.3 = INTEGER: 3
+SNMPv2-SMI::enterprises.99999.1.2.1.1.4 = INTEGER: 4
+SNMPv2-SMI::enterprises.99999.1.2.1.1.5 = INTEGER: 5
+SNMPv2-SMI::enterprises.99999.1.2.1.1.6 = INTEGER: 6
+SNMPv2-SMI::enterprises.99999.1.2.1.1.7 = INTEGER: 7
+SNMPv2-SMI::enterprises.99999.1.2.1.1.8 = INTEGER: 8
+SNMPv2-SMI::enterprises.99999.1.2.1.1.9 = INTEGER: 9
+SNMPv2-SMI::enterprises.99999.1.2.1.1.10 = INTEGER: 10
 (..)
+```
+
+To gather a specific info, e.g. only the free block count for all devices:
+
+```bash
+snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::enterprises.99999.1.2.1.4
 ```
 
 ## Nagios
@@ -75,13 +88,13 @@ EDIT `objects/commands.cfg`:
 define command {
 	command_name	check_backup_usage
 	# warn if less than 4GB free, critical if less than 2GB
-	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::experimental.1.$ARG2$.2 -u blocks -w 1048576: -c 524288:
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::enterprises.99999.1.2.1.4.$ARG2$ -u blocks -w 1048576: -c 524288:
 }
 
 define command {
 	command_name	check_backup_last_write
 	# warn if last write time was more than 2 days ago, critical if more than 6 days ago
-	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::experimental.1.$ARG2$.3 -u seconds -w 172800 -c 518400
+	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::enterprises.99999.1.2.1.5.$ARG2$ -u seconds -w 172800 -c 518400
 }
 ```
 

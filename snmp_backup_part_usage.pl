@@ -10,20 +10,19 @@ use Date::Parse;
 # SNMPv2-SMI::experimental.1.<DEVICE_NO>.<OID_ACTION>
 
 use constant {
-    # our OID root, e.g. SNMPv2-SMI::experimental.1
-    OID_ROOT                           => ".1.3.6.1.3.1",
+    OID_FFM_BACKUP => ".1.3.6.1.4.1.99999.1",
+};
 
-    # device name, e.g. vxdc
-    OID_ACTION_DEVICE                  => 0,
-
-    # device uuid, e.g. 22ff11f5-2160-4f76-8547-2c4f13b1f2a8
-    OID_ACTION_UUID                    => 1,
-
-    # free blocks (usually of 4k bytes)
-    OID_ACTION_FREE_BLOCKS             => 2,
-
-    # last write timeinterval (until now), e.g. 7200 => 2 hours
-    OID_ACTION_LAST_WRITE_TIMEINTERVAL => 3,
+use constant {
+    # our OID root, currently under enterprises.99999 (iana OIB registration is pending)
+    OID_PART_NUMBER                    => OID_FFM_BACKUP . '.1',
+    OID_PART_TABLE                     => OID_FFM_BACKUP . '.2',
+    OID_PART_TABLE_ENTRY               => OID_FFM_BACKUP . '.2.1',
+    OID_PART_TABLE_ENTRY_INDEX         => OID_FFM_BACKUP . '.2.1.1',
+    OID_PART_TABLE_ENTRY_DEVICE        => OID_FFM_BACKUP . '.2.1.2',
+    OID_PART_TABLE_ENTRY_UUID          => OID_FFM_BACKUP . '.2.1.3',
+    OID_PART_TABLE_ENTRY_FREE_BLOCKS   => OID_FFM_BACKUP . '.2.1.4',
+    OID_PART_TABLE_ENTRY_LAST_WRITE    => OID_FFM_BACKUP . '.2.1.5',
 
     # internals
     DEV_INFO_UUID                      => "DEV_INFO_UUID",
@@ -33,9 +32,9 @@ use constant {
 };
 
 sub snmp_output {
-    (my $oid_ref, my $type, my $value) = @_;
+    (my $oid, my $type, my $value) = @_;
     print join("\n",
-        join('.', (OID_ROOT, @$oid_ref)),
+        $oid,
         $type,
         $value
     ) . "\n";
@@ -62,11 +61,16 @@ sub get_all_disks {
 
     # filter out all devices without a valid uuid and also all xvdaX devices, .e.g. /dev/xvda5
     my @devices =
-        sort { dev_name($a) cmp dev_name($b) }
-        grep(/\-/ && dev_name($_) !~ /^xvda\d/, readdir DIR);
+        sort {dev_name($a) cmp dev_name($b)}
+            grep (/\-/ && dev_name($_) !~ /^xvda\d/, readdir DIR);
     closedir DIR;
 
     @devices;
+}
+
+sub get_disks_count {
+    @_ = get_all_disks();
+    return scalar(@_);
 }
 
 # fetches a specific info from the given device
@@ -94,36 +98,81 @@ sub get_info_from_device {
     }
 }
 
-# process the specific action for an existing mountpoint
-sub snmp_process_endpoint {
-    (my $oid_ref, my $device_path, my $action) = @_;
+# parses the OID string and returns a known prefix and the index, if any
+sub parse_oid {
+    my ($oid) = @_;
 
-    if ($action == OID_ACTION_DEVICE) {
-        snmp_output($oid_ref, "STRING", dev_name($device_path));
-    } elsif ($action == OID_ACTION_UUID) {
-        snmp_output($oid_ref, "STRING", $device_path);
-    } elsif ($action == OID_ACTION_FREE_BLOCKS) {
-        $_ = get_info_from_device($device_path, DEV_INFO_FREE_BLOCKS);
-        if (defined()) {
-            snmp_output($oid_ref, "INTEGER32", $_);
-        }
-    } elsif ($action == OID_ACTION_LAST_WRITE_TIMEINTERVAL) {
-        $_ = get_info_from_device($device_path, DEV_INFO_LAST_WRITE_TIME);
-        if (defined()) {
-            snmp_output($oid_ref, "INTEGER32", time() - str2time($_));
+    my $oid_prefix = '';
+    my $index = undef;
+
+    my @OID = (
+        OID_PART_TABLE_ENTRY_LAST_WRITE,
+        OID_PART_TABLE_ENTRY_FREE_BLOCKS,
+        OID_PART_TABLE_ENTRY_UUID,
+        OID_PART_TABLE_ENTRY_DEVICE,
+        OID_PART_TABLE_ENTRY_INDEX,
+        OID_PART_TABLE_ENTRY,
+        OID_PART_TABLE,
+        OID_PART_NUMBER,
+    );
+
+    foreach (@OID) { # loop over all available OID prefixes and try to match the most specific one
+        if ((index $oid, $_) == 0) {
+            $oid_prefix = $_;
+            # extract the index (last item) if available
+            $index = substr($oid, length($_) + 1) if length($oid) > length($_);
+            last;
         }
     }
+
+    ($oid_prefix, $index);
 }
 
-# process an SNMP GET request
-sub snmp_get {
-    my @oid = @_;
-    (my $oid_dev, my $snmp_action) = @oid;
+# checks if the given oid has a specific prefix
+sub oid_has_prefix {
+    my ($oid, $prefix) = @_;
+    (index $oid, $prefix) == 0;
+}
 
-    if (defined $oid_dev) {
-        my $device_path = get_device_path_from_oid_index($oid_dev);
-        if (defined $device_path) {
-            snmp_process_endpoint(\@oid, $device_path, $snmp_action);
+# process an SNMP GET request, index being already defined. The given OID MUST resolve to a leaf in the OIB tree,
+# else this method will fail.
+sub snmp_get {
+    my ($oid) = @_;
+
+    my ($oid_prefix, $index) = parse_oid($oid);
+
+    if ($oid_prefix eq OID_PART_NUMBER && defined $index && $index == 0) {
+        snmp_output($oid, "INTEGER", get_disks_count());
+    }
+
+    elsif ($oid_prefix eq OID_PART_TABLE_ENTRY_INDEX) {
+        snmp_output($oid, "INTEGER", $index);
+    }
+
+    else {
+        my $device_path = get_device_path_from_oid_index($index);
+        return unless defined $device_path;
+
+        if ($oid_prefix eq OID_PART_TABLE_ENTRY_DEVICE) {
+            snmp_output($oid, "STRING", dev_name($device_path));
+        }
+
+        elsif ($oid_prefix eq OID_PART_TABLE_ENTRY_UUID) {
+            snmp_output($oid, "STRING", $device_path);
+        }
+
+        elsif ($oid_prefix eq OID_PART_TABLE_ENTRY_FREE_BLOCKS) {
+            $_ = get_info_from_device($device_path, DEV_INFO_FREE_BLOCKS);
+            if (defined()) {
+                snmp_output($oid, "INTEGER32", $_);
+            }
+        }
+
+        elsif ($oid_prefix eq OID_PART_TABLE_ENTRY_LAST_WRITE) {
+            $_ = get_info_from_device($device_path, DEV_INFO_LAST_WRITE_TIME);
+            if (defined()) {
+                snmp_output($oid, "INTEGER32", time() - str2time($_));
+            }
         }
     }
 }
@@ -134,12 +183,37 @@ sub snmp_get {
 # see https://stackoverflow.com/questions/16365940/snmp-extend-as-an-integer-and-not-a-string
 #
 sub snmp_next {
-    (my $oid_dev, my $snmp_action) = @_;
+    my ($oid) = @_;
 
-    return snmp_next(0) unless defined $oid_dev;
-    return snmp_get($oid_dev, 0) unless defined $snmp_action;
-    return snmp_get($oid_dev, $snmp_action + 1) if ($snmp_action < OID_ACTION_LAST_WRITE_TIMEINTERVAL);
-    snmp_next($oid_dev + 1);
+    my ($oid_prefix, $index) = parse_oid($oid);
+
+    if ($oid_prefix eq OID_PART_NUMBER) {
+        return snmp_next(OID_PART_TABLE_ENTRY_INDEX.'.0') if defined $index;
+        return snmp_get(OID_PART_NUMBER.'.0');
+    } elsif (oid_has_prefix($oid_prefix, OID_PART_TABLE_ENTRY)) {
+        return snmp_get(OID_PART_TABLE_ENTRY_INDEX.'.0') if $oid_prefix eq OID_PART_TABLE_ENTRY;
+        return snmp_get($oid_prefix.'.0') unless defined $index;
+
+        my $last_index = get_disks_count() - 1;
+        if ($index < $last_index) {
+            return snmp_get($oid_prefix . '.' . ($index + 1));
+        }
+
+        my $table_entry = substr($oid_prefix, (length(OID_PART_TABLE_ENTRY)+1));
+        if ($table_entry < 5) {
+            return snmp_get(OID_PART_TABLE_ENTRY . '.' . ($table_entry + 1) . '.0');
+        }
+        return
+    }
+
+    # catch all
+    snmp_next(OID_PART_NUMBER);
+
+
+    # return snmp_next(0) unless defined $oid_dev;
+    # return snmp_get($oid_dev, 0) unless defined $snmp_action;
+    # return snmp_get($oid_dev, $snmp_action + 1) if ($snmp_action < OID_ACTION_LAST_WRITE_TIMEINTERVAL);
+    # snmp_next($oid_dev + 1);
 }
 
 ##
@@ -147,18 +221,12 @@ sub snmp_next {
 #
 my %opts;
 
-sub usage() { die("Usage: $0 [-g] [-n] OID"); }
-getopts('h?gn', \%opts) or usage;
+getopts('h?gn', \%opts) or die("Usage: $0 [-g] [-n] OID");
 
 my $base_dir = "/dev/disk/by-uuid";
 chdir($base_dir);
 
-if ( (index $ARGV[0], OID_ROOT) == 0) {
-    $_ = substr($ARGV[0], length(OID_ROOT));
-    my @oid = split(/\./);
-    shift(@oid);
+my $oid = $ARGV[0];
 
-    snmp_get(@oid) if $opts{'g'};
-    snmp_next(@oid) if $opts{'n'};
-
-} else { die("OID must match the prefix " . OID_ROOT); }
+snmp_get($oid) if $opts{'g'};
+snmp_next($oid) if $opts{'n'};
