@@ -41,13 +41,56 @@ sub snmp_output {
 }
 
 sub get_device_path_from_oid_index {
-    my $oid_dev = shift() - 1;
+    my $oid_dev = shift();
 
-    # our index is positive (non zero) by definition
-    return if $oid_dev == -1;
+    my %devices = get_all_disks();
+    $devices { $oid_dev }
+}
 
-    my @devices = get_all_disks();
-    $devices[$oid_dev];
+
+# This determines the xen device number for a given device file. The number is 0 for /dev/xvda, 1 for /dev/xvdb
+# and so on.
+# see http://xenbits.xenproject.org/docs/unstable/man/xen-vbd-interface.7.html
+sub get_xen_device_number {
+
+    use constant {
+        MINOR_MASK => 037774000377,
+        MINOR_SHIFT => 0,
+    };
+
+    my ($device) = @_;
+    my $rdev= (stat($device))[6];
+
+    my $minor = ($rdev & MINOR_MASK) >> MINOR_SHIFT;
+
+    if ($minor < 256) {
+        return $minor >> 4;
+    } else {
+        # disks or partitions 16 onwards
+        return ($minor >> 20);
+    }
+}
+
+sub get_max_oid_device_index {
+    my %disks = get_all_disks();
+    my @keys = sort { $a <=> $b } keys %disks;
+    $keys[-1];
+}
+
+sub get_min_oid_device_index {
+    my %disks = get_all_disks();
+    my @keys = sort { $a <=> $b } keys %disks;
+    $keys[0];
+}
+
+sub get_next_device_index {
+    my $start_index = shift();
+    my %disks = get_all_disks();
+    my @keys = sort { $a <=> $b } keys %disks;
+    foreach (@keys) {
+        return $_ if $_ > $start_index;
+    }
+    return $_;
 }
 
 # resolves the device name (xvdX) from the uid (e.g. cca3e787-6594-4e55-8c24-094c634d9f45)
@@ -58,23 +101,29 @@ sub dev_name {
 
 ##
 # Fetches a list of all available disks (all directory entries in /dev/disk/by-uuid/)
-# sorted by the underlying device in /dev/xvdX
+# hashed by the xen device number
 #
 sub get_all_disks {
     opendir(DIR, ".") or die $!;
 
-    # filter out all devices without a valid uuid and also all xvdaX devices, .e.g. /dev/xvda5
-    my @devices =
-        sort {dev_name($a) cmp dev_name($b)}
-            grep (/\-/ && dev_name($_) !~ /^xvda\d/, readdir DIR);
-    closedir DIR;
+    my %hash;
 
-    @devices;
+    while (my $device_name = readdir DIR) {
+        my $xen_device_number = get_xen_device_number($device_name);
+        next unless $xen_device_number > 0;
+
+        my $dev_name = dev_name($device_name);
+        next unless defined($dev_name);
+
+        $hash{ $xen_device_number } = $device_name;
+    }
+
+    %hash;
 }
 
 sub get_disks_count {
-    @_ = get_all_disks();
-    return scalar(@_);
+    my %disks = get_all_disks();
+    return scalar(keys %disks);
 }
 
 # fetches a specific info from the given device
@@ -192,20 +241,21 @@ sub snmp_next {
     my ($oid_prefix, $index) = parse_oid($oid);
 
     if ($oid_prefix eq OID_PART_NUMBER) {
-        return snmp_next(OID_PART_TABLE_ENTRY_INDEX.'.1') if defined $index;
+        return snmp_next(OID_PART_TABLE_ENTRY_INDEX . '.' . get_min_oid_device_index()) if defined $index;
         return snmp_get(OID_PART_NUMBER.'.0');
     } elsif (oid_has_prefix($oid_prefix, OID_PART_TABLE_ENTRY)) {
         return snmp_get(OID_PART_TABLE_ENTRY_INDEX.'.0') if $oid_prefix eq OID_PART_TABLE_ENTRY;
         return snmp_get($oid_prefix.'.1') unless defined $index;
 
-        my $last_index = get_disks_count();
+        my $last_index = get_max_oid_device_index();
+
         if ($index < $last_index) {
-            return snmp_get($oid_prefix . '.' . ($index + 1));
+            return snmp_get($oid_prefix . '.' . get_next_device_index($index));
         }
 
         my $table_entry = substr($oid_prefix, (length(OID_PART_TABLE_ENTRY)+1));
         if ($table_entry < 5) {
-            return snmp_get(OID_PART_TABLE_ENTRY . '.' . ($table_entry + 1) . '.1');
+            return snmp_get(OID_PART_TABLE_ENTRY . '.' . ($table_entry + 1) . '.' . get_min_oid_device_index());
         }
         return
     }

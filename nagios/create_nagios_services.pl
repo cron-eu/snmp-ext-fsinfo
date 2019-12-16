@@ -5,36 +5,61 @@ use warnings FATAL => 'all';
 use File::Basename;
 use Data::Dumper qw(Dumper);
 
-##
-# Loop over all available backup directories and outputs Nagios (v3) service definitions to be copy-and-pasted
-#
-
 # resolves the device name (xvdX) from the uid (e.g. cca3e787-6594-4e55-8c24-094c634d9f45)
 sub dev_name {
     (my $device_name) = @_;
     basename readlink $device_name;
 }
 
+# This determines the xen device number for a given device file. The number is 0 for /dev/xvda, 1 for /dev/xvdb
+# and so on.
+# see http://xenbits.xenproject.org/docs/unstable/man/xen-vbd-interface.7.html
+sub get_xen_device_number {
+
+    use constant {
+        MINOR_MASK => 037774000377,
+        MINOR_SHIFT => 0,
+    };
+
+    my ($device) = @_;
+    my $rdev= (stat($device))[6];
+
+    my $minor = ($rdev & MINOR_MASK) >> MINOR_SHIFT;
+
+    if ($minor < 256) {
+        return $minor >> 4;
+    } else {
+        # disks or partitions 16 onwards
+        return ($minor >> 20);
+    }
+}
+
 ##
 # Fetches a list of all available disks (all directory entries in /dev/disk/by-uuid/)
-# sorted by the underlying device in /dev/xvdX
+# hashed by the xen device number
 #
 sub get_all_disks {
     my $base_dir = "/dev/disk/by-uuid";
     chdir($base_dir);
-    opendir(DIR, $base_dir) or die $!;
 
-    # filter out all devices without a valid uuid and also all xvdaX devices, .e.g. /dev/xvda5
-    my @devices =
-        sort { dev_name($a) cmp dev_name($b) }
-        grep(/\-/ && dev_name($_) !~ /^xvda\d/, readdir DIR);
-    closedir DIR;
+    opendir(DIR, ".") or die $!;
 
-    @devices;
+    my %hash;
+
+    while (my $device_name = readdir DIR) {
+        my $xen_device_number = get_xen_device_number($device_name);
+        next unless $xen_device_number > 0;
+
+        my $dev_name = dev_name($device_name);
+        next unless defined($dev_name);
+
+        $hash{ $xen_device_number } = $device_name;
+    }
+
+    %hash;
 }
 
-
-my @uuid_to_oid_array = get_all_disks();
+my %uuid_to_oid_array_map = reverse get_all_disks();
 
 chdir "/backup/RSYNC-BACKUP" or die $!;
 
@@ -50,7 +75,7 @@ foreach my $dir (@dirs) {
         my $uuid = basename readlink $dir;
 
         # e.g. 9
-        my ($oid) = grep { $uuid_to_oid_array[$_] eq $uuid } (0 .. @uuid_to_oid_array-1);
+        my $oid = $uuid_to_oid_array_map{ $uuid };
 
         if (defined($oid)) {
             $oid++;

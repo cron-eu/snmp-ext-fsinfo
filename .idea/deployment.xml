@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="On explicit save action" serverName="backup-ffm-1" autoUploadExternalChanges="true" showDifferentInSync="false" showNewOnSourceInSync="false">
+  <component name="PublishConfigData" autoUpload="On explicit save action" serverName="backup-ffm-1" autoUploadExternalChanges="true" showDifferentInSync="false" showNewOnSourceInSync="false" showAutoUploadSettingsWarning="false">
     <serverData>
       <paths name="backup-ffm-1">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/usr/share/snmp" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="backup-ffm-2">
         <serverdata>
           <mappings>
             <mapping deploy="/usr/share/snmp" local="$PROJECT_DIR$" web="/" />
