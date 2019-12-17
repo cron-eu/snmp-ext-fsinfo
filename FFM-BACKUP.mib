@@ -11,7 +11,7 @@ cron-MIB DEFINITIONS ::= BEGIN
 		-- From RFC-1213 (MIB-II)
 		DisplayString ::= OCTET STRING
 
-	cron      OBJECT IDENTIFIER ::= { enterprises 99999 }
+	cron      OBJECT IDENTIFIER ::= { enterprises 29662 }
 	ffmBackup OBJECT IDENTIFIER ::= { cron 1 }
 
 	partNumber OBJECT-TYPE

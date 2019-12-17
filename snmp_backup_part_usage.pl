@@ -10,11 +10,11 @@ use Date::Parse;
 # SNMPv2-SMI::experimental.1.<DEVICE_NO>.<OID_ACTION>
 
 use constant {
-    OID_FFM_BACKUP => ".1.3.6.1.4.1.99999.1",
+    OID_FFM_BACKUP => ".1.3.6.1.4.1.29662.1",
 };
 
 use constant {
-    # our OID root, currently under enterprises.99999 (iana OIB registration is pending)
+    # our OID root, currently under enterprises.29662 (iana OIB registration is pending)
     OID_PART_NUMBER                    => OID_FFM_BACKUP . '.1',
     OID_PART_TABLE                     => OID_FFM_BACKUP . '.2',
     OID_PART_TABLE_ENTRY               => OID_FFM_BACKUP . '.2.1',

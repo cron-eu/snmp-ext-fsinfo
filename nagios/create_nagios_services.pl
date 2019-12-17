@@ -88,14 +88,14 @@ foreach my $dir (@dirs) {
 # backup-host: $host
 # uuid: $uuid
 # device: $device
-# oid: SNMPv2-SMI::enterprises.99999.1.2.1.4.$oid
+# oid: SNMPv2-SMI::enterprises.29662.1.2.1.4.$oid
 define service {
 	use			generic-service
 	service_description	BACKUP_USAGE
 	check_command		check_backup_usage!$host!$oid
 	host_name		$dir
 }
-# oid: SNMPv2-SMI::enterprises.99999.1.2.1.5.$oid
+# oid: SNMPv2-SMI::enterprises.29662.1.2.1.5.$oid
 define service {
 	use			generic-service
 	service_description	BACKUP_LAST_WRITE
