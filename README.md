@@ -10,7 +10,6 @@ devices and make this info available via SNMP via a perl script.
 
 * uses the `tune2fs` binary to retrieve the info which requires an ext2/3/4 file system.
 * kind-of specific to our use-case (monitoring a bunch of partitions on our backup server infrastructure)
-* the provided `create_nagios_services.pl` script is very specific to our concrete needs.
 
 
 ## Setup
@@ -105,36 +104,6 @@ define command {
 	command_line	/usr/lib/nagios/plugins/check_snmp -P2c -H $ARG1$ -o SNMPv2-SMI::enterprises.29662.1.2.1.5.$ARG2$ -u seconds -w 172800 -c 518400
 }
 ```
-
-To create the service definitions there is a perl script available:
-
-```bash
-/usr/share/snmp/nagios/create_nagios_services.pl
-```
-
-This will generate snippets like:
-
-```
-# backup-host: backup-ffm-1.ffm
-# uuid: 7d0260f4-6670-407c-aaa2-fe13d26017ae
-# device: xvdf
-# oid: SNMPv2-SMI::experimental.1.3
-define service {
-	use			generic-service
-	service_description	BACKUP_USAGE
-	check_command		check_backup_usage!backup-ffm-1.ffm!3
-	host_name		web50.serverdienst.net
-}
-define service {
-	use			generic-service
-	service_description	BACKUP_LAST_WRITE
-	check_command		check_backup_last_write!backup-ffm-1.ffm!3
-	host_name		web50.serverdienst.net
-}
-```
-
-to be appended to the nagios host definition file.
-
 
 ## Author
 
