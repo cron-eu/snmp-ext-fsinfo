@@ -10,19 +10,19 @@ use Date::Parse;
 # SNMPv2-SMI::experimental.1.<DEVICE_NO>.<OID_ACTION>
 
 use constant {
-    OID_FFM_BACKUP => ".1.3.6.1.4.1.29662.1",
+    OID_ROOT => ".1.3.6.1.4.1.29662.1",
 };
 
 use constant {
     # our OID root, currently under enterprises.29662 (iana OIB registration is pending)
-    OID_PART_NUMBER                    => OID_FFM_BACKUP . '.1',
-    OID_PART_TABLE                     => OID_FFM_BACKUP . '.2',
-    OID_PART_TABLE_ENTRY               => OID_FFM_BACKUP . '.2.1',
-    OID_PART_TABLE_ENTRY_INDEX         => OID_FFM_BACKUP . '.2.1.1',
-    OID_PART_TABLE_ENTRY_DEVICE        => OID_FFM_BACKUP . '.2.1.2',
-    OID_PART_TABLE_ENTRY_UUID          => OID_FFM_BACKUP . '.2.1.3',
-    OID_PART_TABLE_ENTRY_FREE_BLOCKS   => OID_FFM_BACKUP . '.2.1.4',
-    OID_PART_TABLE_ENTRY_LAST_WRITE    => OID_FFM_BACKUP . '.2.1.5',
+    OID_PART_NUMBER                    => OID_ROOT . '.1',
+    OID_PART_TABLE                     => OID_ROOT . '.2',
+    OID_PART_TABLE_ENTRY               => OID_ROOT . '.2.1',
+    OID_PART_TABLE_ENTRY_INDEX         => OID_ROOT . '.2.1.1',
+    OID_PART_TABLE_ENTRY_DEVICE        => OID_ROOT . '.2.1.2',
+    OID_PART_TABLE_ENTRY_UUID          => OID_ROOT . '.2.1.3',
+    OID_PART_TABLE_ENTRY_FREE_BLOCKS   => OID_ROOT . '.2.1.4',
+    OID_PART_TABLE_ENTRY_LAST_WRITE    => OID_ROOT . '.2.1.5',
 
     # internals
     DEV_INFO_UUID                      => "DEV_INFO_UUID",

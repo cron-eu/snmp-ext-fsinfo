@@ -1,9 +1,17 @@
-# cron-ffm-backup-snmp
+# snmp-ext-fsinfo
 
 ## Abstract
 
 Gather the free block count and last write timestamp for all available
-backup partitions and make this info available via SNMP by using a perl script.
+devices and make this info available via SNMP via a perl script.
+
+
+## Limitations und known issues
+
+* uses the `tune2fs` binary to retrieve the info which requires an ext2/3/4 file system.
+* kind-of specific to our use-case (monitoring a bunch of partitions on our backup server infrastructure)
+* the provided `create_nagios_services.pl` script is very specific to our concrete needs.
+
 
 ## Setup
 
@@ -13,17 +21,17 @@ Install SNMP Daemon:
 aptitude install snmpd sudo
 ```
 
-Make the perl script from the repo available under `/usr/share/snmp/snmp_backup_part_usage.pl`
+Make the perl script from the repo available under `/usr/share/snmp/snmp_ext_part_usage.pl`
 
 ```bash
-cp snmp_backup_part_usage.pl /usr/share/snmp/
-chmod +x /usr/share/snmp/snmp_backup_part_usage.pl
+cp snmp_ext_part_usage.pl /usr/share/snmp/
+chmod +x /usr/share/snmp/snmp_ext_part_usage.pl
 ```
 
 Configure sudo for the tune2fs binary
 
 ```bash
-echo "snmp    ALL = (root) NOPASSWD: /sbin/tune2fs -l *" > /etc/sudoers.d/snmp_backup_part_usage_script
+echo "snmp    ALL = (root) NOPASSWD: /sbin/tune2fs -l *" > /etc/sudoers.d/snmp_ext_part_usage_script
 ```
 
 Configure SNMP Daemon:
@@ -33,14 +41,14 @@ EDIT `/etc/snmp/snmpd.conf`
 And add this configuration:
 
 ```bash
-# internet.experimental.1
-pass .1.3.6.1.4.1.29662.1               /usr/bin/perl   /usr/share/snmp/snmp_backup_part_usage.pl
+# internet.enterprises.29662.1
+pass .1.3.6.1.4.1.29662.1               /usr/bin/perl   /usr/share/snmp/snmp_ext_part_usage.pl
 ``` 
 
-And in the Access Control block:
+And in the Access Control block, e.g. allow the IP xxx.xxx.xxx.xxx to get access.
 
 ```bash
-rocommunity public  217.24.223.9
+rocommunity public  xxx.xxx.xxx.xxx
 ```
 
 .. so the specified IP can access the rocommunity.
@@ -54,7 +62,7 @@ Restart the daemon
 ## Test
 
 ```bash
-snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::enterprises.29662.1
+snmpwalk -v2c -c public IP_OR_HOSTNAME SNMPv2-SMI::enterprises.29662.1
 ```
 
 This should return the free blocks, last write timestamp and other infos like:
@@ -77,7 +85,7 @@ SNMPv2-SMI::enterprises.29662.1.2.1.1.10 = INTEGER: 10
 To gather a specific info, e.g. only the free block count for all devices:
 
 ```bash
-snmpwalk -v2c -c public backup-ffm-1.ffm SNMPv2-SMI::enterprises.29662.1.2.1.4
+snmpwalk -v2c -c public IP_OR_HOSTNAME SNMPv2-SMI::enterprises.29662.1.2.1.4
 ```
 
 ## Nagios
@@ -126,22 +134,6 @@ define service {
 ```
 
 to be appended to the nagios host definition file.
-
-## ToDo's
-
-* write a NIB File to resolve the numeric OIDs.
-
-
-## IANA
-
-cron IT GmbH has an official PEN assigned:
-
-```
-29662
- cron IT GmbH
-   Remus Lazar
-     remus@cron-it.de
-```
 
 
 ## Author
